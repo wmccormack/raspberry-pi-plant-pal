@@ -49,4 +49,4 @@ while True:
     # Print the sensor values.
     print('| {0:>6} | {1:>6} | {2:0.1f}* | {3:0.1f}% |'.format(moisture, light, temperature, humidity))
     # Pause for 5 seconds.
-    time.sleep(5)
+    time.sleep(10)

@@ -1,6 +1,8 @@
 import sys, time
 import Adafruit_ADS1x15, Adafruit_DHT
 import requests
+from httsleep import httsleep
+import RPi.GPIO as GPIO
 
 
 
@@ -24,7 +26,7 @@ print('Reading moisture, light, temperature and humidity values, press Ctrl-C to
 print('| Moisture | Light | Temp | Humidity |')
 print('-' * 35)
 
-    # Main loop.
+# Main loop.
 while True:
             # Call the read_retry method from the Adafruit_DHT module.
             humidity_reading, temperature_reading = Adafruit_DHT.read_retry(sensor, pin)
@@ -46,6 +48,24 @@ while True:
 
             payload ={'Moisture':moisture,'Light':light,'Temp':temperature,'Humid':humidity}
 
-            r = requests.post("http://wmccormack.pythonanywhere.com/readings/pidata/", data=payload) 
-            # Pause for 5 seconds.
-            time.sleep(5)
+            r = requests.post("http://wmccormack.pythonanywhere.com/readings/", data=payload)
+            # Pause for 2 seconds.
+            time.sleep(2)
+
+            pi_id = 1
+            watering_payload = {'Identification': pi_id}
+
+            w = requests.post("http://wmccormack.pythonanywhere.com/watering/", data=watering_payload)
+
+            if w.content=="Water!":
+                GPIO.setmode(GPIO.BOARD)
+                GPIO.setwarnings(False)
+                GPIO.setup(11, GPIO.OUT)
+                GPIO.output(11, GPIO.HIGH)
+                time.sleep(1)
+
+                GPIO.cleanup()
+            else:
+                print "Nope"
+            time.sleep(600)
+            

@@ -28,29 +28,37 @@ def data_function():
     # Call the read_retry method from the Adafruit_DHT module.
     try:
         humidity_reading, temperature_reading = Adafruit_DHT.read_retry(sensor, pin)
-    except:
-        error_log = {'Error':'There was an error at the pi end with reading temp and humidity values'}
-        r = requests.post("http://wmccormack.pythonanywhere.com/errors/", data=error_log)
+    except Exception as e:
+        error_log = {'Error':"There was an error at Monitoring Station 1. Specifically {}".format(e)}
+        r = requests.post("http://wmccormack.pythonanywhere.com/errors/errors/", data=error_log)
 
     # Call the read_adc method from the Adafruit_ADS1x15 module for obtaining the moisture and light values.
     try:
         moisture_reading = adc.read_adc(0, gain=GAIN)
-    except:
-        error_log = {'Error':'There was an error at the pi end with reading moisture values'}
-        r = requests.post("http://wmccormack.pythonanywhere.com/errors/", data=error_log)
+    except Exception as e:
+        error_log = {'Error':"There was an error at Monitoring Station 1. Specifically {}".format(e)}
+        r = requests.post("http://wmccormack.pythonanywhere.com/errors/errors/", data=error_log)
     try:
         light_reading = adc.read_adc(1, gain=GAIN)
-    except:
-        error_log = {'Error':'There was an error at the pi end with reading light values'}
-        r = requests.post("http://wmccormack.pythonanywhere.com/errors/", data=error_log)
+    except Exception as e:
+        error_log = {'Error':"There was an error at Monitoring Station 1. Specifically {}".format(e)}
+        r = requests.post("http://wmccormack.pythonanywhere.com/errors/errors/", data=error_log)
 
     # Prepare the readings for HTTP Post Request. To maintain data integrity
     # we multiply up by 10 and divide by 10.0 at the server side (if needed)
     # in the case of temperature and humidity. Therefore no rounding issues.
-    moisture = int(moisture_reading)
-    light = int(light_reading)
-    temperature = int(temperature_reading*10)
-    humidity = int(humidity_reading*10)
+    try:
+        moisture = int(moisture_reading)
+        light = int(light_reading)
+        temperature = int(temperature_reading*10)
+        humidity = int(humidity_reading*10)
+    except (TypeError, Exception) as e:
+        error_log = {'Error':"There was an error at Monitoring Station 1. Specifically {}. Values have been defaulted on this occasion but check the station for loose cables.".format(e)}
+        r = requests.post("http://wmccormack.pythonanywhere.com/errors/errors/", data=error_log)
+        moisture = 1100
+        light = 900
+        temperature = 230
+        humidity = 600
 
     
     # Print the sensor values to screen (if a screen is attached to the plant monitoring station).
@@ -62,9 +70,9 @@ def data_function():
         r = requests.post("http://wmccormack.pythonanywhere.com/readings/", data=payload)
         # Pause for 2 seconds.
         time.sleep(2)
-    except:
-        error_log = {'Error':'There was an error at the pi end with uploading data to the application'}
-        r = requests.post("http://wmccormack.pythonanywhere.com/errors/", data=error_log)
+    except Exception as e:
+        error_log = {'Error':"There was an error at Monitoring Station 1. Specifically {}".format(e)}
+        r = requests.post("http://wmccormack.pythonanywhere.com/errors/errors/", data=error_log)
 
 # Function to check if the plant requires water and if so, activate the waterer. Lastly, the function sends
 # notification to the web application that the plant was watered. 
@@ -73,9 +81,9 @@ def watering_function():
 
     try:
         w = requests.post("http://wmccormack.pythonanywhere.com/watering/plant_communication/", data=watering_payload)
-    except:
-        error_log = {'Error':'There was an error at the pi end with checking for watering notification'}
-        r = requests.post("http://wmccormack.pythonanywhere.com/errors/", data=error_log)
+    except Exception as e:
+        error_log = {'Error':"There was an error at Monitoring Station 1. Specifically {}".format(e)}
+        r = requests.post("http://wmccormack.pythonanywhere.com/errors/errors/", data=error_log)
 
     try:
         if w.content=="Water!":
@@ -88,9 +96,9 @@ def watering_function():
             n = requests.post("http://wmccormack.pythonanywhere.com/notifications/", data=watering_payload) 
         else:
             print "Nope"
-    except:
-        error_log = {'Error':'There was an error at the pi end with activating the water mechanism'}
-        r = requests.post("http://wmccormack.pythonanywhere.com/errors/", data=error_log)
+    except Exception as e:
+        error_log = {'Error':"There was an error at Monitoring Station 1. Specifically {}".format(e)}
+        r = requests.post("http://wmccormack.pythonanywhere.com/errors/errors/", data=error_log)
         
 loop=0
 while True:
